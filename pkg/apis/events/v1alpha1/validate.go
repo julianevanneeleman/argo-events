@@ -57,14 +57,9 @@ func ValidateSASLConfig(saslConfig *SASLConfig) error {
 	}
 
 	switch saslConfig.Mechanism {
-	case "", "PLAIN", "OAUTHBEARER", "SCRAM-SHA-256", "SCRAM-SHA-512", "GSSAPI":
+	case "", "PLAIN", "OAUTHBEARER", "SCRAM-SHA-256", "SCRAM-SHA-512", "GSSAPI", "AWS-MSK-IAM":
 	default:
-		return fmt.Errorf("invalid sasl config. Possible values for SASL Mechanism are `OAUTHBEARER`, `PLAIN`, `SCRAM-SHA-256`, `SCRAM-SHA-512` and `GSSAPI`")
-	}
-
-	// user and password must both be set
-	if saslConfig.UserSecret == nil || saslConfig.PasswordSecret == nil {
-		return fmt.Errorf("invalid sasl config, both userSecret and passwordSecret must be defined")
+		return fmt.Errorf("invalid sasl config. Possible values for SASL Mechanism are `OAUTHBEARER`, `PLAIN`, `SCRAM-SHA-256`, `SCRAM-SHA-512`, `GSSAPI` and `AWS-MSK-IAM`")
 	}
 
 	return nil
