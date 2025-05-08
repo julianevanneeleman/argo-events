@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/IBM/sarama"
+	"github.com/aws/aws-msk-iam-sasl-signer-go/signer"
 	"go.uber.org/zap"
 
 	"github.com/argoproj/argo-events/pkg/apis/events/v1alpha1"
@@ -271,6 +272,15 @@ func (el *EventListener) partitionConsumer(ctx context.Context, log *zap.Sugared
 	}
 }
 
+type MSKAccessTokenProvider struct {
+	region string
+}
+
+func (m *MSKAccessTokenProvider) Token() (*sarama.AccessToken, error) {
+	token, _, err := signer.GenerateAuthToken(context.TODO(), m.region)
+	return &sarama.AccessToken{Token: token}, err
+}
+
 func getSaramaConfig(kafkaEventSource *v1alpha1.KafkaEventSource, log *zap.SugaredLogger) (*sarama.Config, error) {
 	config, err := sharedutil.GetSaramaConfigFromYAMLString(kafkaEventSource.Config)
 	if err != nil {
@@ -296,6 +306,8 @@ func getSaramaConfig(kafkaEventSource *v1alpha1.KafkaEventSource, log *zap.Sugar
 			config.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &sharedutil.XDGSCRAMClient{HashGeneratorFcn: sharedutil.SHA512New} }
 		} else if config.Net.SASL.Mechanism == "SCRAM-SHA-256" {
 			config.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &sharedutil.XDGSCRAMClient{HashGeneratorFcn: sharedutil.SHA256New} }
+		} else if kafkaEventSource.SASL.GetMechanism() == "AWS-MSK-IAM" {
+			config.Net.SASL.TokenProvider = &MSKAccessTokenProvider{region: kafkaEventSource.SASL.AwsRegion}
 		}
 
 		user, err := sharedutil.GetSecretFromVolume(kafkaEventSource.SASL.UserSecret)
