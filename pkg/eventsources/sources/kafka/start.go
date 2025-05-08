@@ -310,7 +310,7 @@ func getSaramaConfig(kafkaEventSource *v1alpha1.KafkaEventSource, log *zap.Sugar
 			config.Net.SASL.TokenProvider = &MSKAccessTokenProvider{region: kafkaEventSource.SASL.AwsRegion}
 		}
 
-		if config.Net.SASL.Mechanism != "AWS-MSK-IAM" {
+		if kafkaEventSource.SASL.GetMechanism() != "AWS-MSK-IAM" {
 			user, err := sharedutil.GetSecretFromVolume(kafkaEventSource.SASL.UserSecret)
 			if err != nil {
 				log.Errorf("Error getting user value from secret: %v", err)
